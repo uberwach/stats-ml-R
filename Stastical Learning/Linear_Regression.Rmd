@@ -1,0 +1,165 @@
+---
+title: "Linear_Regression"
+output: html_document
+---
+
+Simple R Code that follows Chapter 3 of the online StatLearning course on stanford.edu.
+
+---
+
+```{r}
+library(MASS) 
+library(ISLR)
+```
+
+Simple linear regression on the Boston dataset contained in MASS package. 
+
+```{r}
+names(Boston)
+```
+
+Plot lstat (lower status of the pop. in percent) and medv (median value of owner-occupied homes in $k). medv is the response variable here.
+
+```{r}
+fit1 = lm(medv~lstat, data=Boston) # Build a linear model medv = f(lstat) = beta_0 + beta_1 *  lstat
+plot(medv~lstat, Boston, xlab="Lower Status (%)", ylab="Median Housevalue (in k$)")
+abline(fit1, col="red")
+```
+
+Print some statistics about the model.
+
+```{r}
+summary(fit1) # Print detailed summaries of the linear model
+names(fit1) # fit1 is a data.frame as well
+confint(fit1) # Confidence Interval
+```
+
+It is pretty much evident that there is a linear correlation.
+
+We can now make prediction using our linear model (even with CIs).
+
+```{r}
+predict(fit1, data.frame(lstat=c(5,10,15)), interval = "confidence")
+```
+
+Build additional linear models by adding the age (proportion of owner-occupied units built prior to 1940) as a predictor and do a multilinear regression.
+
+```{r}
+fit2 = lm(medv~lstat+age, data=Boston)
+summary(fit2)
+```
+
+Age seems to be a weak but statistically significant predictor for this model.
+
+---
+
+The dot symbol stands for all variables.
+
+```{r}
+fit3 = lm(medv~., data=Boston) # . means all variables
+summary(fit3)
+```
+
+It is obvious that indus (proportion of non-retail business acres per town) and age can be thrown out.
+
+
+```{r}
+par(mfrow=c(2,2)) # par = graphical parameters, 2x2 grid
+plot(fit3) # plot information about the linear model.
+```
+
+We can even downgrade existing model by removing features with the update function.
+
+```{r}
+fit4 = update(fit3, ~.-age-indus) # nothing means same response
+summary(fit4)
+```
+
+All predictors are statistically significant in the modified model.
+
+Nonlinear Iteractions
+----------------------------------
+
+Nonlinear interactions can be added easily by combining the features in formulas.
+
+```{r}
+fit5 = lm(medv~lstat*age, Boston)
+summary(fit5)
+```
+
+Polynomial features should be given by wrapping I around the formula.
+
+```{r}
+# ; seperates commands in one line
+# I means something like "read symbolic"
+fit6 = lm(medv~lstat + I(lstat^2), Boston); summary(fit6)
+```
+
+Test and plot the non-linear feature.
+
+```{r}
+attach(Boston) # choose it as standard frame
+par(mfrow=c(1,1))
+plot(medv~lstat)
+points(lstat, fitted(fit6), col = "red", pch = 20)
+```
+
+One can see that the quadratic predicto produces good results.
+
+Fitting polynomials is actually supported directly by R.
+```{r}
+plot(medv~lstat)
+fit7 = lm(medv~poly(lstat,4))
+points(lstat, fitted(fit7), col="blue", pch = 20)
+```
+
+Which plotting characters (pch) are available? 
+
+```{r}
+plot(1:20, 1:20, pch=1:20, cex=2)
+```
+
+---
+
+Qualitative Predictors
+---------------------------
+Use another dataset named Carseats.
+
+```{r}
+names(Carseats)
+summary(Carseats)
+```
+
+Fit linear model.
+
+```{r}
+# Adds interaction between Income : Advertising and Age:Price.
+fit1 = lm(Sales~.+Income:Advertising+Age:Price, Carseats)
+summary(fit1)
+```
+
+The command contrasts shows for a categorical variable how it is encoded, i.e. which dummy variables are being introduced.
+
+```{r}
+contrasts(Carseats$ShelveLoc)
+```
+
+---
+Writing R functions
+
+Write a function that does a linear regression and plots it.
+
+```{r}
+regplot = function(x,y,...) {
+  fit=lm(y~x)
+  plot(x,y,...)
+  abline(fit, col="red")
+}
+```
+
+Use the function:
+
+```{r}
+attach(Carseats)
+regplot(Price,Sales, xlab="Price", ylab="Sales", col="blue", pch = 20)
+```
