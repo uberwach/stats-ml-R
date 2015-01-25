@@ -163,3 +163,18 @@ Use the function:
 attach(Carseats)
 regplot(Price,Sales, xlab="Price", ylab="Sales", col="blue", pch = 20)
 ```
+
+Appendix
+-----------------------
+
+What is the difference between lm(y ~ x*z) and lm(y ~ I(x*z)), when x and z are both numeric variables?
+
+
+```{r} 
+fitA = lm(medv~lstat*age, Boston) # lm(y ~ x*z)
+summary(fitA)
+fitB = lm(medv~I(lstat*age), Boston) # lm(y ~ I(x*z))
+summary(fitB)
+```
+
+Answer: The second includes only an interaction term for x and z, while the first includes both interaction effects and main effects.
