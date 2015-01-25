@@ -145,8 +145,8 @@ contrasts(Carseats$ShelveLoc)
 ```
 
 ---
-Writing R functions
-
+Writing R Functions
+----------------------------------
 Write a function that does a linear regression and plots it.
 
 ```{r}
