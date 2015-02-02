@@ -1,9 +1,10 @@
 ---
 title: "Linear_Regression"
+author: "Gerrit"
 output: html_document
 ---
 
-Simple R Code that follows Chapter 3 of the online StatLearning course on stanford.edu.
+Simple R Code that follows Chapter 3 (Linear Regression) of the online StatLearning course on stanford.edu.
 
 ---
 

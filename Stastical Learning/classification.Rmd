@@ -1,0 +1,100 @@
+---
+title: "Classification"
+author: "Gerrit"
+date: "02.02.2015"
+output: html_document
+---
+Simple R Code that follows Chapter 4 (Classification) of the online StatLearning course on stanford.edu.
+
+---
+
+
+---
+Logistic Regression on market data set.
+---
+```{r}
+require(ISLR) 
+```
+
+Relevant is the market dataset, that contains stock market in the time frame 2001 to 2005. We are interested in inferring the direction of the stock market. The data frame of interest is "Smarket".
+
+
+```{r}
+names(Smarket)
+summary(Smarket)
+```
+
+Plot the scatterplots of pairs. Color the data points by the value of the qualitative variable direction (up/down).
+
+```{r}
+pairs(Smarket, col=Smarket$Direction)
+```
+
+Fit a logistic regression with direction as a response.
+
+```{r}
+glm.fit = glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume, data=Smarket, family=binomial) # family binomial means logistic regr.
+summary(glm.fit)
+```
+
+No predictor seems to be significant. Let us check the quality of the model.
+
+Run the model on the training data and compute results.
+
+```{r}
+glm.probs = predict(glm.fit, type="response")
+glm.probs[1:5] 
+glm.pred = ifelse(glm.probs>0.5, "Up", "Down")
+```
+
+Now compare the results of the fitted model on the training data vs the labels with a contigency table.
+
+```{r}
+attach(Smarket)
+table(glm.pred, Smarket$Direction)
+```
+
+And how often is it correct?
+
+```{r}
+mean(glm.pred == Smarket$Direction)
+```
+
+Only 52% of the time.
+
+Now just train with the data with data before 2005 and then test the model with the data from 2005.
+
+```{r}
+train = Year<2005 # give the traing subset by a predicate
+glm.fit = glm(Direction ~ Lag1+Lag2+Lag3+Lag4+Lag5+Volume, data=Smarket, family=binomial, subset=train) 
+
+# check prediction on test data.
+glm.probs = predict(glm.fit, newdata=Smarket[!train,], type= "response")
+glm.pred = ifelse(glm.probs > 0.5, "Up", "Down")
+Direction.2005 = Smarket$Direction[!train]
+table(glm.pred, Direction.2005)
+mean(glm.pred == Direction.2005)
+```
+
+With 48% it actually performs worse than a dice would. Actually inverting the result of the model would be a better idea.
+
+Do the analysis on only two features.
+
+```{r}
+glm.fit = glm(Direction~Lag1+Lag2, data = Smarket, family=binomial, subset=train)
+
+glm.probs = predict(glm.fit, newdata = Smarket[!train,], type = "response")
+glm.pred= ifelse(glm.probs > 0.5, "Up", "Down")
+table(glm.pred, Direction.2005)
+mean(glm.pred == Direction.2005)
+```
+
+The results improved to almost 56%. How could this have been spotted?
+
+```{r}
+summary(glm.fit)
+```
+
+The p-values are not indicating significance.
+
+---
