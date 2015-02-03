@@ -98,3 +98,48 @@ summary(glm.fit)
 The p-values are not indicating significance.
 
 ---
+Linear Discrimant Analysis
+---
+
+```{r}
+require(MASS) # includes lda
+```
+
+Again the stock market data is analysed, this time with linear discrimant analysis.
+
+```{r}
+lda.fit = lda(Direction~Lag1+Lag2, data=Smarket, subset=Year<2005)
+lda.fit
+plot(lda.fit) # prints the discrimant values as a histogram
+```
+
+```{r}
+Smarket.2005 = subset(Smarket, Year == 2005)
+lda.pred = predict(lda.fit, Smarket.2005)
+data.frame(lda.pred)[1:5,] # lda.pred is a list, convert to data.frame and look at first 5 rows.
+```
+
+Now compare predicted results with true labels.
+```{r}
+table(lda.pred$class, Smarket.2005$Direction) # Confusion matrix
+mean(lda.pred$class == Smarket.2005$Direction)
+```
+
+---
+K-nearest Neighbor Classification
+---
+
+```{r}
+library(class)
+?knn
+```
+
+```{r}
+attach(Smarket)
+Xlag = cbind(Lag1,Lag2) # selects the two columns lag1 and lag2.
+train = Year < 2005
+# knn(X_train, X_test, Y_train,k)
+knn.pred = knn(Xlag[train,], Xlag[!train,], Direction[train],k=1)
+table(knn.pred, Direction[!train])
+mean(knn.pred == Direction[!train])
+```
