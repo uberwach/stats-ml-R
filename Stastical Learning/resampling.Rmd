@@ -1,0 +1,80 @@
+---
+title: "Resampling"
+author: "Gerrit"
+date: "05.03.2015"
+output: html_document
+---
+
+Sample code that follows chapter 5 on Sampling.
+
+---
+The boot package gives bootstrapping functionality.
+```{r}
+require(ISLR)
+require(boot)
+```
+
+We look at the Auto data set and plot miles per gallon against horsepower.
+
+```{r}
+plot(mpg~horsepower, data=Auto)
+```
+
+---
+
+LOOCV
+-----
+
+Trying LOOCV (leave one out cross validation):
+
+```{r}
+glm.fit = glm(mpg~horsepower, data=Auto)
+cv.glm(Auto,glm.fit)$delta # pretty slow
+```
+
+Second value is estimation reduced by bias. Since we use LOOCV it is not far off, but for k-folds with a smaller k this effect is going to play a bigger role.
+
+```{r}
+loocv = function(fit) {
+  h = lm.influence(fit)$h
+  mean((residuals(fit) / (1-h))^2)
+}
+```
+
+```{r}
+loocv(glm.fit)
+```
+
+```{r}
+cv.error = rep(0,5)
+degree = 1:5
+
+for (d in degree) {
+  glm.fit = glm(mpg ~ poly(horsepower, d), data = Auto)
+  cv.error[d] = loocv(glm.fit)
+}
+plot(degree,cv.error,type="b")
+```
+
+---
+
+ten-fold CV
+-----------
+
+```{r}
+cv.error10 = rep(0,5)
+for (d in degree) {
+  glm.fit = glm(mpg ~ poly(horsepower,d), data = Auto)
+  cv.error10[d] = cv.glm(Auto, glm.fit, K = 10)$delta[1]
+}
+plot(degree, cv.error10, type = "b")
+lines(degree, cv.error10, type = "b", col = "red")
+```
+
+---
+
+Bootstrap
+--------
+
+fff
+
