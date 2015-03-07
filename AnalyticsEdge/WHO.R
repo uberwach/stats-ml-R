@@ -1,4 +1,5 @@
-WHO = csv.load("WHO.csv")
+WHO = read.csv("WHO.csv")
+
 names(WHO)
 summary(WHO$Over60)
 
