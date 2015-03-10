@@ -1,0 +1,110 @@
+---
+title: "Model Selection"
+author: "Gerrit"
+date: "10.03.2015"
+output: html_document
+---
+
+Model Selection
+===============
+
+```{r}
+library(ISLR)
+summary(Hitters)
+```
+
+Clean the data set:
+
+```{r}
+Hitters = na.omit(Hitters) # removes na entries
+with(Hitters, sum(is.na(Salary)))
+```
+
+Best Subset regression
+----------------------
+
+The package `leaps` contains a command to evaluate all best-subset models.
+```{r}
+library(leaps)
+regfit.full = regsubsets(Salary~., data = Hitters)
+summary(regfit.full)
+```
+
+```{r}
+regfit.full = regsubsets(Salary ~ ., data = Hitters, nvmax = 19)
+reg.summary = summary(regfit.full)
+names(reg.summary)
+```
+
+```{r}
+plot(reg.summary$cp, xlab = "Number of variables", ylab = "Cp")
+minIndex = which.min(reg.summary$cp)
+points(10, reg.summary$cp[minIndex], pch = 20, col = "red")
+```
+
+```{r}
+plot(regfit.full, scale = "Cp")
+coef(regfit.full, 10)
+```
+
+Forward Stepwise Selection
+--------------------------
+
+`regsubsets` also supports forward stepwise selection.
+
+```{r}
+regfit.fwd = regsubsets(Salary ~ ., data = Hitters, nvmax = 19, method = "forward")
+summary(regfit.fwd)
+plot(regfit.fwd, scale = "Cp")
+```
+
+Of course a subset of the data can be used.
+
+```{r}
+dim(Hitters)
+set.seed(1)
+train = sample(seq(263), 180, replace = FALSE)
+train
+regfit.fwd = regsubsets(Salary ~ ., data = Hitters[train,], nvmax = 19, method = "forward")
+```
+
+Now iterate all 19 models and test them on the test data set (= the data points not used in training).
+
+```{r}
+val.errors = rep(NA, 19)
+x.test = model.matrix(Salary ~ ., data = Hitters[-train,]) # -train *excludes* observation by train
+
+for (i in 1:19) {
+  # the used variables (coef)
+  coefi = coef(regfit.fwd, id = i)
+  # select the features and multiply with their factors given by the current model
+  pred = x.test[, names(coefi)] %*% coefi
+  # calculate RSS
+  val.errors[i] = mean((Hitters$Salary[-train]-pred)^2)
+}
+```
+
+Now plot the results.
+
+```{r}
+plot(sqrt(val.errors), ylab = "Root MSE", ylim = c(300,400), pch = 19, type = "b")
+points(sqrt(regfit.fwd$rss[-1]/180), col = "blue", pch = 19, type = "b")
+legend("topright", legend = c("Training", "Validation"), col = c("blue", "black"), pch = 19)
+```
+
+It looks like the model with 5 features selected by forward selection performs best. There is a noteworthy jump of validation error at index 7 which jumps back. From index 14 on the model overfits immensely.
+
+Instead of hacking prediction with regsubsets it should be factored in an own method:
+
+```{r}
+predict.regsubsets = function(object, newdata, id, ...) {
+  # extract the formula from the model
+  form = as.formula(object$call[[2]])
+  mat = model.matrix(form, newdata)
+  coefi = coef(object, id = id)
+  mat[,names(coefi)] %*% coefi
+}
+```
+
+Model selection by Cross-Validation
+----------------------------------
