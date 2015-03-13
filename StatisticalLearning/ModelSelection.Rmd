@@ -108,3 +108,84 @@ predict.regsubsets = function(object, newdata, id, ...) {
 
 Model selection by Cross-Validation
 ----------------------------------
+
+```{r}
+set.seed(2)
+folds = sample(rep(1:10, length = nrow(Hitters)))
+folds
+table(folds)
+```
+
+```{r}
+cv.errors = matrix(NA, 10, 19)
+
+for (k in 1:10) {
+  best.fit = regsubsets(Salary ~ ., data = Hitters[folds!=k,], nvmax = 19, method = "forward")
+  for (i in 1:19) {
+    pred = predict(best.fit, Hitters[folds==k,], id = i)
+    cv.errors[k,i] = mean( (Hitters$Salary[folds == k] - pred)^2)
+  }
+}
+
+rmse.cv = sqrt(apply(cv.errors, 2, mean))
+plot(rmse.cv, pch = 19, type = "b")
+```
+
+Ridge Regression and the Lasso
+------------------------------
+
+The `glmnet` package supplies some models such as ridge and lasse regression, note that it does not conform to the regular model fitting notation.
+
+```{r}
+library(glmnet)
+x = model.matrix(Salary ~ .-1, data = Hitters)
+y = Hitters$Salary
+```
+
+When glmnet is being called with $\alpha = 0$, then ridge regression is run.
+
+```{r}
+fit.ridge = glmnet(x, y, alpha = 0)
+plot(fit.ridge, xvar = "lambda", label = TRUE)
+```
+
+As it can be seen the coefficients converge to zero for huge value of lambda.
+
+With cross-validation the test error can be estimate.
+```{r}
+cv.ridge = cv.glmnet(x, y, alpha = 0)
+plot(cv.ridge)
+```
+
+The two vertical lines are at the minimum and one std error away from the minimum (a good position to pick lambda from).
+
+To fit a lasso model $\alpha = 1$ should be used.
+
+```{r}
+fit.lasso = glmnet(x,y, alpha = 1)
+plot(fit.lasso, xvar = 'lambda', label = TRUE)
+```
+
+It can be seen that lasso regression pushes coefficients to zero much more aggressive. So the desired property of lasso regression shows here quite well.
+
+```{r}
+cv.lasso = cv.glmnet(x, y)
+plot(cv.lasso)
+coef(cv.lasso)
+```
+
+```{r}
+lasso.tr = glmnet(x[train,], y[train])
+lasso.tr
+pred = predict(lasso.tr, x[-train,])
+dim(pred)
+
+# build the validation curve by lambda
+rmse = sqrt(apply((y[-train]-pred)^2,2,mean))
+plot(log(lasso.tr$lambda), rmse, type = "b", xlba = "log(lambda)")
+lam.best = lasso.tr$lambda[order(rmse)[1]]
+lam.best
+coef(lasso.tr, s = lam.best)
+```
+
+
