@@ -134,3 +134,24 @@ lm1 = lm(wage ~ ns(age,df = 4) + ns(year, df = 4) + education, data = Wage)
 plot.gam(lm1, se = T)
 ```
 
+Homework
+--------
+
+```{r}
+load("7.R.RData") # data set is x,y
+plot(x,y)
+```
+
+```{r}
+fit = lm(y ~ x)
+
+```
+
+A coefficient of $-0.67483$ for the linear term can be read off.
+
+```{r}
+fit2 = lm(y ~ I(x^2) + I(x) + 1)
+summary(fit2)
+```
+
+A coefficient of around $77.71$ for the coefficient $\alpha$ of $x$ can be read off.
